@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 3.30)
+project(Calculator)
+option(BUILD_SHARED_LIBS "Build using shared libraries " ON)
+add_library(Calculate calculate.cpp)
+target_include_directories(Calculate PUBLIC ${MAKE_SOURCE_DIR})
+add_executable(Calculator main.cpp)
+target_link_libraries(Calculator PRIVATE Calculate)
