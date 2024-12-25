@@ -19,6 +19,9 @@ int main() {
         } catch(const DivideToZero& ex)
         {
             std::cout << ex.message << '\n';
+        }  catch(const TooManySigns& ex)
+        {
+            std::cout << ex.message << '\n';
         }
     }
     return 0;

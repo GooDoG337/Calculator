@@ -17,6 +17,9 @@ struct DivideToZero
 {
     std::string message = "На нуль мы сегодня не делим";
 };
+struct TooManySigns {
+    std::string message = "Проснитесь и отпустите кнопку, пожалуйста";
+};
 void Calculate(std::string& expression);
 
 
