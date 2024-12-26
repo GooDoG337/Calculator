@@ -26,8 +26,11 @@ double RightValue(const std::string& expression, size_t& sign_indx) {
         num *= 10;
         num += expression[sign_indx++] - 48;
     }       //Справа от знака число, если есть хотя бы одна цифра.
-    if (!isItNum && expression[sign_indx] != '.' && expression[sign_indx] != '+') {
+    if ((expression[sign_indx] > '9' && expression[sign_indx < '0']) && expression[sign_indx] != '*' && expression[sign_indx] != '/' && expression[sign_indx] != '+' && expression[sign_indx] != '-') {
         throw WrongSymbol();
+    }
+    if (!isItNum && expression[sign_indx] != '.') {
+        throw TooManySigns();
     }
     double afterDot = 0.1;
     if (expression[sign_indx] == '.') {         //Если в числе оказалась точка.
@@ -36,7 +39,7 @@ double RightValue(const std::string& expression, size_t& sign_indx) {
             num += (expression[sign_indx++] - 48) * afterDot;
             afterDot /= 10;             //Вычисляем дробную часть числа
         }
-        if (expression[sign_indx] == '.') {
+        if (expression[sign_indx] == '.' ) {
             throw SecondFraction();         //Выдаём ошибку, если посреди дробной часть появилаьс дробь
         }
     }
@@ -67,13 +70,27 @@ double LeftValue(const std::string& expression, size_t& sign_indx) {
     }
     else if(expression[sign_indx] == '+') {
         read_Indx = ++sign_indx;
-    }else {
+    }else if (expression[sign_indx] <= '9' && expression[sign_indx] >= '0')
+    {
         read_Indx = sign_indx;
+    } else {
+        read_Indx = sign_indx+1;
+        sign_indx++;
     }
-    while (expression[read_Indx] <= '9' && expression[read_Indx] >= '0' && expression[read_Indx] != sign ) {
-        num *= 10;
-        num += expression[read_Indx++] - 48;
-    } //находим целую часть пока не дойдём до знака выражения
+    bool StartFraction = false;
+    if (sign_indx > 0) {
+        if (expression[sign_indx-1] == '.') {
+            read_Indx--;
+            sign_indx--;
+            StartFraction = true;
+        }
+    }
+    if (!StartFraction) {
+        while (expression[read_Indx] <= '9' && expression[read_Indx] >= '0' && expression[read_Indx] != sign ) {
+            num *= 10;
+            num += expression[read_Indx++] - 48;
+        } //находим целую часть пока не дойдём до знака выражения
+    }
     double afterDot = 0.1;
     if (expression[read_Indx] == '.') {
         read_Indx++;
@@ -98,12 +115,17 @@ void Calculate(std::string& expression) {
         }
     }
     expression.erase(std::remove(expression.begin(), expression.end(), ' '), expression.end());
-    //std::cout << expression << '\n';
+    auto Minuses = expression.find("--");
+    while (Minuses != std::string::npos) {
+        expression.replace(Minuses, 2, "+");
+        Minuses = expression.find("--", Minuses);
+    }
+
     size_t RightEnd = expression.find('*');
     size_t LeftStart = RightEnd;
     while(RightEnd != std::string::npos) {
         double b = RightValue(expression, RightEnd);
-        //std::cout << "a = " << a << std::endl;
+        //std::cout << "b = " << b << std::endl;
         double a = LeftValue(expression, LeftStart);
         //std::cout << "a = " << a << std::endl;
         expression.replace(LeftStart, RightEnd - LeftStart, std::to_string(a * b));
@@ -120,47 +142,70 @@ void Calculate(std::string& expression) {
     LeftStart = RightEnd;
     while(RightEnd != std::string::npos) {
         double b = RightValue(expression, RightEnd);
-        std::cout << "b = " << b << std::endl;
+        //std::cout << "b = " << b << std::endl;
         double a = LeftValue(expression, LeftStart);
-        std::cout << "a = " << a << std::endl;
+        //std::cout << "a = " << a << std::endl;
         expression.replace(LeftStart, RightEnd - LeftStart, std::to_string(a / b));
         if (b == 0) {
             throw DivideToZero();
         }
         RightEnd = expression.find('/');
         LeftStart = RightEnd;
+        //std::cout << expression << std::endl;
+
     }
     RightEnd = expression.find('+');
     LeftStart = RightEnd;
     while(RightEnd != std::string::npos) {
         double b = RightValue(expression, RightEnd);
- //       std::cout << b << std::endl;
+        //       std::cout << b << std::endl;
         double a = LeftValue(expression, LeftStart);
         expression.replace(LeftStart, RightEnd - LeftStart, std::to_string(a + b));
         RightEnd = expression.find('+');
         LeftStart = RightEnd;
     }
-    RightEnd = expression.find('-');
-    bool isItNum = true;
-    bool isPositive = true;
-    if(expression[0] == '-' || (expression[0] <= '9' && expression[0] >= '0')) {
+    bool isItNum = false;
+    for (const auto& c : expression) {
+        if (c != '-' && c != '.' && (c < '0' || c > '9')) {
+            throw WrongSymbol();
+        }
+    }
+    if(expression[0] == '-') {
+        isItNum = true;
         for(int i = 1; i < expression.size(); i++) {
-            if(expression[i] == '-' || expression[i] == '+' && expression[i] == '/' || expression[i] == '*')
+            if ((expression[i] > '9' || expression[i] < '0') && expression[i] != '.')
             {
                 isItNum = false;
                 break;
             }
         }
+    } if (isItNum) {return; }
+    RightEnd = expression.find('-');
+    if (RightEnd == 0) {
+        RightEnd = expression.find('-', 1);
     }
-    if(!isItNum){
-        LeftStart = RightEnd;
-        while(RightEnd != std::string::npos) {
-            double b = RightValue(expression, RightEnd);
-            //std::cout << b << std::endl;
-            double a = LeftValue(expression, LeftStart);
-            expression.replace(LeftStart, RightEnd - LeftStart, std::to_string(a + b));
-            RightEnd = expression.find('-');
-            LeftStart = RightEnd;;
+    LeftStart = RightEnd;
+    while(RightEnd != std::string::npos) {
+        double b = RightValue(expression, RightEnd);
+        //std::cout <<"b == " << b << std::endl;
+        double a = LeftValue(expression, LeftStart);
+        //std::cout << "a = " << a << std::endl;
+        expression.replace(LeftStart, RightEnd - LeftStart, std::to_string(a - b));
+        //std::cout << expression << std::endl;
+        if(expression[0] == '-') {
+            for(int i = 1; i < expression.size(); i++) {
+                if ((expression[i] <= '9' && expression[i] >= '0' ) || expression[i] == '.')
+                {
+                    isItNum = true;
+                }
+                else {
+                    isItNum = false;
+                    break;
+                }
+            }
+            if (isItNum) {return; }
         }
+        RightEnd = expression.find('-',1);
+        LeftStart = RightEnd;;
     }
 }

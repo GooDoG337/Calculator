@@ -7,7 +7,7 @@ struct SecondFraction
 };
 struct WrongSymbol
 {
-    std::string message = "Ты втираешь мне какую-то дичь.";
+    std::string message = "Какой-то символ тут явно не подходит.";
 };
 struct WhereIsNum
 {
@@ -15,7 +15,7 @@ struct WhereIsNum
 };
 struct DivideToZero
 {
-    std::string message = "На нуль мы сегодня не делим";
+    std::string message = "Некорректное деление";
 };
 struct TooManySigns {
     std::string message = "Проснитесь и отпустите кнопку, пожалуйста";
