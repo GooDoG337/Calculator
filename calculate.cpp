@@ -1,6 +1,7 @@
 #include "calculate.h"
 
 #include <algorithm>
+#include <exception>
 #include <iostream>
 
 double RightValue(const std::string& expression, size_t& sign_indx) {
@@ -32,15 +33,15 @@ double RightValue(const std::string& expression, size_t& sign_indx) {
     if (!isItNum && expression[sign_indx] != '.') {
         throw TooManySigns();
     }
-    double afterDot = 0.1;
-    if (expression[sign_indx] == '.') {         //Если в числе оказалась точка.
+    if (expression[sign_indx] == '.') {
+            double afterDot = 0.1;          //Если в числе оказалась точка.
         sign_indx++;                    //Отходим от точки направо
         while (expression[sign_indx] <= '9' && expression[sign_indx] >= '0' && sign_indx < expression.size()) {
             num += (expression[sign_indx++] - 48) * afterDot;
             afterDot /= 10;             //Вычисляем дробную часть числа
         }
         if (expression[sign_indx] == '.' ) {
-            throw SecondFraction();         //Выдаём ошибку, если посреди дробной часть появилаьс дробь
+            throw WrongSymbol();         //Выдаём ошибку, если посреди дробной часть появилаьс дробь
         }
     }
     if(isPositive) {
@@ -91,8 +92,8 @@ double LeftValue(const std::string& expression, size_t& sign_indx) {
             num += expression[read_Indx++] - 48;
         } //находим целую часть пока не дойдём до знака выражения
     }
-    double afterDot = 0.1;
     if (expression[read_Indx] == '.') {
+        double afterDot = 0.1;
         read_Indx++;
         while (expression[read_Indx] <= '9' && expression[read_Indx] >= '0' && expression[read_Indx] != sign ) {
             num += afterDot*(expression[read_Indx++] - 48);
@@ -108,19 +109,7 @@ double LeftValue(const std::string& expression, size_t& sign_indx) {
 }
 
 void Calculate(std::string& expression) {
-    for(int i = 2; i < expression.size(); i++) {
-        if((expression[i] <= '9' && expression[i] >= '0') && (expression[i-1] == ' ') && (expression[i-2] <= '9' && expression[i-2] >= '0'))
-        {
-            expression[i-1] = '*';
-        }
-    }
-    expression.erase(std::remove(expression.begin(), expression.end(), ' '), expression.end());
-    auto Minuses = expression.find("--");
-    while (Minuses != std::string::npos) {
-        expression.replace(Minuses, 2, "+");
-        Minuses = expression.find("--", Minuses);
-    }
-
+    Validize(expression);
     size_t RightEnd = expression.find('*');
     size_t LeftStart = RightEnd;
     while(RightEnd != std::string::npos) {
@@ -207,5 +196,30 @@ void Calculate(std::string& expression) {
         }
         RightEnd = expression.find('-',1);
         LeftStart = RightEnd;;
+    }
+
+}
+
+void Validize(std::string& expression) {
+    if (expression.empty()) {
+        throw EmptyExpression();
+    }
+    for(int i = 2; i < expression.size(); i++) {
+        if((expression[i] <= '9' && expression[i] >= '0') && (expression[i-1] == ' ') && (expression[i-2] <= '9' && expression[i-2] >= '0'))
+        {
+            expression[i-1] = '*';
+        }
+    }
+    if (expression.find('*') == std::string::npos &&
+    expression.find('/') == std::string::npos &&
+    expression.find('+') == std::string::npos &&
+    expression.find('-',1) == std::string::npos) {
+        throw NoSigns();
+    }
+    expression.erase(std::remove(expression.begin(), expression.end(), ' '), expression.end());
+    auto Minuses = expression.find("--");
+    while (Minuses != std::string::npos) {
+        expression.replace(Minuses, 2, "+");
+        Minuses = expression.find("--", Minuses);
     }
 }
