@@ -1,26 +1,40 @@
 #ifndef CALCULATOR_CALCULATE_H
 #define CALCULATOR_CALCULATE_H
 #include <string>
-struct SecondFraction
+struct WrongSymbol:std::exception
 {
-    std::string message = "Число не может иметь несколько дробных частей.";
+    const char *what() const noexcept override {
+        return "Обнаружен неподходящий символ.";
+    }
 };
-struct WrongSymbol
+struct WhereIsNum:std::exception
 {
-    std::string message = "Какой-то символ тут явно не подходит.";
+    const char *what() const noexcept override {
+        return "Одно или оба числа не были найдены.";
+    }
 };
-struct WhereIsNum
+struct DivideToZero:std::exception
 {
-    std::string message = "А где число?";
+    const char *what() const noexcept override {
+        return "Некорректное деление";
+    }
 };
-struct DivideToZero
-{
-    std::string message = "Некорректное деление";
+struct TooManySigns:std::exception {
+    const char *what() const noexcept override {
+        return "Обнаружено несколько знаков операций подряд.";
+    }
 };
-struct TooManySigns {
-    std::string message = "Проснитесь и отпустите кнопку, пожалуйста";
+struct NoSigns:std::exception {
+    const char *what() const noexcept override {
+        return "Нет знаков, которые надо вычислять.";
+    }
+};
+struct EmptyExpression:std::exception {
+    const char *what() const noexcept override {
+        return "Выражение пустое.";
+    }
 };
 void Calculate(std::string& expression);
-
+void Validize(std::string& expression);
 
 #endif //CALCULATOR_CALCULATE_H

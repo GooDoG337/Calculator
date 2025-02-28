@@ -94,7 +94,7 @@ TEST_SUITE("Simple math") {
     }
 }
 
-TEST_SUITE("sus math") {
+TEST_SUITE("Validize test") {
     TEST_SUITE("Spaces between signs") {
         TEST_CASE("2  +  3") {
             expression = "2  +  3";
@@ -114,18 +114,20 @@ TEST_SUITE("sus math") {
     }
 
     TEST_SUITE("Space = multiplication. Wolfram?") {
-            TEST_CASE("2 3") {
-                expression = "2 3";
-                Calculate(expression);
-                CHECK_EQ(stod(expression), 6);
-            }
-            TEST_CASE("-3 8") {
-                expression = "-3*8";
-                Calculate(expression);
-                CHECK_EQ(stod(expression), -24);
-            }
+        TEST_CASE("2 3") {
+            expression = "2 3";
+            Calculate(expression);
+            CHECK_EQ(stod(expression), 6);
         }
+        TEST_CASE("-3 8") {
+            expression = "-3*8";
+            Calculate(expression);
+            CHECK_EQ(stod(expression), -24);
+        }
+    }
+}
 
+TEST_SUITE("Valid expression") {
     TEST_SUITE("Not fully entered number") {
         TEST_CASE("6./7") {
             expression = "6./7";
@@ -148,7 +150,7 @@ TEST_SUITE("sus math") {
             CHECK_EQ(stod(expression), doctest::Approx(7.0/0.5).epsilon(0.01));
         }
     }
-    }
+}
 
 TEST_SUITE("Complex math") {
     TEST_CASE("104/62*76-53+22") {
@@ -205,8 +207,17 @@ TEST_SUITE("Exceptions test") {
         expression = ".555.5+3";
         CHECK_THROWS(Calculate(expression));
     }
+<<<<<<< HEAD
     TEST_CASE("5.0.0") {
         expression = ".555.5+3";
+=======
+    TEST_CASE("4.4.4") {
+        expression = "4.4.4";
+        CHECK_THROWS(Calculate(expression));
+    }
+    TEST_CASE("4.4.1/2") {
+        expression = "4.4.1/2";
+>>>>>>> f1f0ddc7c47474dc465752a8ed124679a5e603c8
         CHECK_THROWS(Calculate(expression));
     }
 }
