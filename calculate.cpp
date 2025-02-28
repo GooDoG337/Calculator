@@ -2,7 +2,7 @@
 
 #include <algorithm>
 #include <iostream>
-
+#include <regex>
 double RightValue(const std::string& expression, size_t& sign_indx) {
     double num = 0;
     bool isItNum = false;
@@ -107,12 +107,124 @@ double LeftValue(const std::string& expression, size_t& sign_indx) {
     } return -num;
 }
 
-void Calculate(std::string& expression) {
+double LeftValue2(const std::string& expression) {
+    std::smatch result;
+    std::regex_search(expression, result, std::regex{R"(^[\-]?\d*[\.]?\d*)"});
+    double lvalue = 0;
+    bool dotdigits = false;
+    double drob = 0.1;
+    bool positive = true;
+    for (const auto& i : result.str())
+    {
+        if (i == '.')
+        {
+            dotdigits = true;
+        }
+        else if(i == '-') {
+            positive = false;
+        }
+        else
+        {
+            if (!dotdigits)
+            {
+                lvalue*=10;
+                lvalue += i-48;
+            }
+            if (dotdigits)
+            {
+                lvalue += (i-48)*drob;
+                drob/=10;
+            }
+        }
+    }
+    if(!positive) lvalue*=-1;
+    return lvalue;
+}
+
+double RightValue2(const std::string& expression) {
+    std::smatch result;
+    std::regex_search(expression, result, std::regex{R"([\-]?\d*[\.]?\d*$)"});
+    std::cout << "result = " << result.str() << '\n';
+    double lvalue = 0;
+    bool dotdigits = false;
+    double drob = 0.1;
+    bool positive = true;
+    for (const auto& i : result.str())
+    {
+        if (i == '.')
+        {
+            dotdigits = true;
+        }
+        else if(i == '-') {
+            positive = false;
+        }
+        else
+        {
+            if (!dotdigits)
+            {
+                lvalue*=10;
+                lvalue += i-48;
+            }
+            if (dotdigits)
+            {
+                lvalue += (i-48)*drob;
+                drob/=10;
+            }
+        }
+    }
+    if(!positive) lvalue*=-1;
+    return lvalue;
+}
+double RightValue3(const std::string& expression) {
+    std::smatch result;
+    std::regex_search(expression, result, std::regex{R"(\d*[\.]?\d*$)"});
+    std::cout << "result = " << result.str() << '\n';
+    double lvalue = 0;
+    bool dotdigits = false;
+    double drob = 0.1;
+    bool positive = true;
+    for (const auto& i : result.str())
+    {
+        if (i == '.')
+        {
+            dotdigits = true;
+        }
+        else if(i == '-') {
+            positive = false;
+        }
+        else
+        {
+            if (!dotdigits)
+            {
+                lvalue*=10;
+                lvalue += i-48;
+            }
+            if (dotdigits)
+            {
+                lvalue += (i-48)*drob;
+                drob/=10;
+            }
+        }
+    }
+    if(!positive) lvalue*=-1;
+    return lvalue;
+}
+
+void Validize(std::string& expression) {
+    if (expression.empty()) {
+        throw std::exception();
+    }
     for(int i = 2; i < expression.size(); i++) {
         if((expression[i] <= '9' && expression[i] >= '0') && (expression[i-1] == ' ') && (expression[i-2] <= '9' && expression[i-2] >= '0'))
         {
             expression[i-1] = '*';
         }
+    }
+    if (expression.find('*') == std::string::npos &&
+    expression.find('/') == std::string::npos &&
+    expression.find('+') == std::string::npos &&
+    expression.find('-',1) == std::string::npos) {
+        throw std::exception();
     }
     expression.erase(std::remove(expression.begin(), expression.end(), ' '), expression.end());
     auto Minuses = expression.find("--");
@@ -120,56 +232,55 @@ void Calculate(std::string& expression) {
         expression.replace(Minuses, 2, "+");
         Minuses = expression.find("--", Minuses);
     }
+}
 
-    size_t RightEnd = expression.find('*');
-    size_t LeftStart = RightEnd;
-    while(RightEnd != std::string::npos) {
-        double b = RightValue(expression, RightEnd);
-        //std::cout << "b = " << b << std::endl;
-        double a = LeftValue(expression, LeftStart);
-        //std::cout << "a = " << a << std::endl;
-        expression.replace(LeftStart, RightEnd - LeftStart, std::to_string(a * b));
-        RightEnd = expression.find('*');
-        LeftStart = RightEnd;
-        //std::cout << expression << std::endl;
+void Calculate(std::string& expression) {
+    Validize(expression);
+    auto Minuses = expression.find("--");
+    while (Minuses != std::string::npos) {
+        expression.replace(Minuses, 2, "+");
+        Minuses = expression.find("--", Minuses);
     }
-    RightEnd = expression.find('/');
+    std::regex r {R"([\-]?\d*[\.]?\d* *\* *[\-]?\d*[\.]?\d* *)"};
+    std::smatch result;
+    std::regex_search(expression, result, r);
+    while(!result.str().empty()) {
+        double b = RightValue2(result.str());
+        double a = LeftValue2(result.str());
+        expression.replace(expression.find(result.str()), result.str().length(), std::to_string(a * b));
+        std::regex_search(expression, result, r);
+    }
     size_t minuses = expression.find("--");
     while(minuses != std::string::npos) {
         expression.replace(minuses, 2, "+");
         minuses = expression.find("--");
     }
-    LeftStart = RightEnd;
-    while(RightEnd != std::string::npos) {
-        double b = RightValue(expression, RightEnd);
-        //std::cout << "b = " << b << std::endl;
-        double a = LeftValue(expression, LeftStart);
-        //std::cout << "a = " << a << std::endl;
-        expression.replace(LeftStart, RightEnd - LeftStart, std::to_string(a / b));
-        if (b == 0) {
-            throw DivideToZero();
-        }
-        RightEnd = expression.find('/');
-        LeftStart = RightEnd;
-        //std::cout << expression << std::endl;
-
+    r = {R"([\-]?\d*[\.]?\d* *\/ *[\-]?\d*[\.]?\d* *)"};
+    std::regex_search(expression, result, r);
+    while(!result.str().empty()) {
+        double b = RightValue2(result.str());
+        double a = LeftValue2(result.str());
+        expression.replace(expression.find(result.str()), result.str().length(), std::to_string(a / b));
+        std::regex_search(expression, result, r);
     }
-    RightEnd = expression.find('+');
-    LeftStart = RightEnd;
-    while(RightEnd != std::string::npos) {
-        double b = RightValue(expression, RightEnd);
-        //       std::cout << b << std::endl;
-        double a = LeftValue(expression, LeftStart);
-        expression.replace(LeftStart, RightEnd - LeftStart, std::to_string(a + b));
-        RightEnd = expression.find('+');
-        LeftStart = RightEnd;
+
+    r = {R"([\-]?\d*[\.]?\d* *\+ *[\-]?\d*[\.]?\d* *)"};
+    std::regex_search(expression, result, r);
+    while(!result.str().empty()) {
+        double b = RightValue2(result.str());
+        std::cout << "b = " << b << '\n';
+        double a = LeftValue2(result.str());
+        std::cout << "a= " << a << '\n';
+        std::cout << "expr = " << expression << '\n';
+        expression.replace(expression.find(result.str()), result.str().length(), std::to_string(a + b));
+        std::regex_search(expression, result, r);
+    }
+    Minuses = expression.find("--");
+    while (Minuses != std::string::npos) {
+        expression.replace(Minuses, 2, "+");
+        Minuses = expression.find("--", Minuses);
     }
     bool isItNum = false;
-    for (const auto& c : expression) {
-        if (c != '-' && c != '.' && (c < '0' || c > '9')) {
-            throw WrongSymbol();
-        }
-    }
     if(expression[0] == '-') {
         isItNum = true;
         for(int i = 1; i < expression.size(); i++) {
@@ -180,18 +291,15 @@ void Calculate(std::string& expression) {
             }
         }
     } if (isItNum) {return; }
-    RightEnd = expression.find('-');
+    size_t RightEnd = expression.find('-');
     if (RightEnd == 0) {
         RightEnd = expression.find('-', 1);
     }
-    LeftStart = RightEnd;
+    size_t LeftStart = RightEnd;
     while(RightEnd != std::string::npos) {
         double b = RightValue(expression, RightEnd);
-        //std::cout <<"b == " << b << std::endl;
         double a = LeftValue(expression, LeftStart);
-        //std::cout << "a = " << a << std::endl;
         expression.replace(LeftStart, RightEnd - LeftStart, std::to_string(a - b));
-        //std::cout << expression << std::endl;
         if(expression[0] == '-') {
             for(int i = 1; i < expression.size(); i++) {
                 if ((expression[i] <= '9' && expression[i] >= '0' ) || expression[i] == '.')
@@ -209,3 +317,17 @@ void Calculate(std::string& expression) {
         LeftStart = RightEnd;;
     }
 }
+   /* r = {R"([\-]?\d*[\.]?\d* *\- *\d*[\.]?\d* *)"};
+    std::regex_search(expression, result, r);
+    while(!result.str().empty()) {
+        double b = RightValue3(result.str());
+        std::cout << "b = " << b << '\n';
+        double a = LeftValue2(result.str());
+        std::cout << "a = " << a << '\n';
+        expression.replace(expression.find(result.str()), result.str().length(), std::to_string(a - b));
+        std::regex_search(expression, result, r);
+    }
+    if(!std::regex_match(expression,std::regex{"[\\-]?\\d*[\\.]?\\d*"})) {
+        throw std::exception();
+    }
+}*/

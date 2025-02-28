@@ -205,4 +205,8 @@ TEST_SUITE("Exceptions test") {
         expression = ".555.5+3";
         CHECK_THROWS(Calculate(expression));
     }
+    TEST_CASE("5.0.0") {
+        expression = ".555.5+3";
+        CHECK_THROWS(Calculate(expression));
+    }
 }
